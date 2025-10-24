@@ -92,3 +92,17 @@ CREATE TABLE order_items (
   FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
+
+CREATE TABLE payments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    order_id INT NOT NULL,
+    payment_method ENUM('paypal', 'stripe', 'cash') DEFAULT 'paypal',
+    payment_status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+    transaction_id VARCHAR(100) NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(10) DEFAULT 'USD',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
