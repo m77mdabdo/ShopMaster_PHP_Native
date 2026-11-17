@@ -11,10 +11,10 @@ if (empty($userData)) {
 }
 
 try {
-    // 🔹 تحقق من الدور
+    // Check the role
     $isAdmin = ($userData['role'] ?? 'user') === 'admin';
 
-    // 🔹 جلب الطلبات
+    // Fetch the orders
     if ($isAdmin) {
         $stmt = $conn->prepare("
             SELECT o.id, u.name AS user_name, o.total_price, o.status, o.created_at

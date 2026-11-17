@@ -17,7 +17,7 @@ if (!$orderId) {
 }
 
 try {
-    // 1️⃣ احصل على Access Token
+    // 1. Get an access token
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "$baseUrl/v1/oauth2/token");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -31,7 +31,7 @@ try {
 
     if (!$accessToken) throw new Exception("Failed to get PayPal access token");
 
-    // 2️⃣ التقاط الدفع
+    // 2. Capture the payment
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "$baseUrl/v2/checkout/orders/$orderId/capture");
     curl_setopt($ch, CURLOPT_POST, true);
@@ -45,15 +45,15 @@ try {
     $captureResult = json_decode($response, true);
     curl_close($ch);
 
-    // 3️⃣ لو الدفع تم بنجاح
+    // 3. If the payment succeeded
     if (isset($captureResult['status']) && $captureResult['status'] === 'COMPLETED') {
 
-        // استخراج البيانات من النتيجة
+        // Extract the data from the result
         $transaction_id = $captureResult['purchase_units'][0]['payments']['captures'][0]['id'] ?? null;
         $amount = $captureResult['purchase_units'][0]['payments']['captures'][0]['amount']['value'] ?? 0;
         $currency = $captureResult['purchase_units'][0]['payments']['captures'][0]['amount']['currency_code'] ?? 'USD';
 
-        // ⚠️ هنا هتربط العملية بالطلب الحقيقي عندك (ممكن تمرر order_id في return_url)
+        // Link this payment to the real order here (you can pass order_id in return_url)
         $order_db_id = $_GET['order_id'] ?? null;
         $user_id = $_GET['user_id'] ?? null;
 
@@ -63,7 +63,7 @@ try {
             exit;
         }
 
-        // 🧾 حفظ الدفع في قاعدة البيانات
+        // Save the payment in the database
         $stmt = $conn->prepare("
             INSERT INTO payments (user_id, order_id, payment_method, payment_status, transaction_id, amount, currency)
             VALUES (:user_id, :order_id, 'paypal', 'completed', :transaction_id, :amount, :currency)
@@ -76,11 +76,11 @@ try {
             ':currency' => $currency
         ]);
 
-        // 🔁 تحديث حالة الطلب
+        // Update the order status
         $update = $conn->prepare("UPDATE orders SET status = 'paid' WHERE id = :id");
         $update->execute([':id' => $order_db_id]);
 
-        // ✅ رد النجاح
+        // Success response
         echo json_encode([
             "status" => true,
             "message" => "Payment captured and recorded successfully",

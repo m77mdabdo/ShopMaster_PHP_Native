@@ -98,7 +98,7 @@ try {
         $discount = $coupon['discount_value'];
     }
 
-    $discount = min($discount, $subtotal); // تأكد إن الخصم مش أكبر من المجموع
+    $discount = min($discount, $subtotal); // Make sure the discount is not larger than the subtotal
 
     http_response_code(200);
     echo json_encode([
