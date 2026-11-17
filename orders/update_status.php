@@ -4,21 +4,21 @@ require_once __DIR__ . "/../conn/db.php";
 require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__ . "/../auth/validate_token.php";
 
-// ✅ تحقق من تسجيل الدخول
+// Make sure the user is logged in
 if (empty($userData)) {
     http_response_code(401);
     echo json_encode(["status" => false, "error" => "Unauthorized"]);
     exit;
 }
 
-// ✅ تحقق من أن المستخدم Admin فقط
+// Admins only
 if (($userData['role'] ?? 'user') !== 'admin') {
     http_response_code(403);
     echo json_encode(["status" => false, "error" => "Access denied: Admins only"]);
     exit;
 }
 
-// ✅ استقبال البيانات من الـBody
+// Read the request body
 $data = json_decode(file_get_contents("php://input"), true);
 
 if (empty($data['order_id']) || empty($data['status'])) {
@@ -30,7 +30,7 @@ if (empty($data['order_id']) || empty($data['status'])) {
 $order_id = intval($data['order_id']);
 $new_status = htmlspecialchars(trim($data['status']));
 
-// 🔒 السماح فقط بحالات محددة
+// Allow only specific statuses
 $allowedStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
 if (!in_array($new_status, $allowedStatuses)) {
@@ -40,7 +40,7 @@ if (!in_array($new_status, $allowedStatuses)) {
 }
 
 try {
-    // 🧾 تحقق إن الطلب موجود
+    // Make sure the order exists
     $checkStmt = $conn->prepare("SELECT id FROM orders WHERE id = :id");
     $checkStmt->bindParam(':id', $order_id);
     $checkStmt->execute();
@@ -51,7 +51,7 @@ try {
         exit;
     }
 
-    // 📝 تحديث الحالة
+    // Update the status
     $updateStmt = $conn->prepare("
         UPDATE orders 
         SET status = :status

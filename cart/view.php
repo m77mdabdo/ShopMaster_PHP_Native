@@ -4,7 +4,7 @@ require_once __DIR__ . "/../conn/db.php";
 require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__ . "/../auth/validate_token.php";
 
-// 🧍‍♂️ المستخدم لازم يكون مسجل دخول
+// The user must be logged in
 if (empty($userData)) {
     http_response_code(401);
     echo json_encode(["status" => false, "error" => "Unauthorized"]);
@@ -14,7 +14,7 @@ if (empty($userData)) {
 $user_id = $userData['id'];
 
 try {
-    // 🛒 جلب كارت المستخدم
+    // Fetch the user's cart
     $cartStmt = $conn->prepare("SELECT * FROM carts WHERE user_id = :uid");
     $cartStmt->bindParam(':uid', $user_id);
     $cartStmt->execute();
@@ -37,7 +37,7 @@ try {
 
     $cart_id = $cart['id'];
 
-    // 📦 جلب المنتجات في الكارت
+    // Fetch the products in the cart
     $itemsStmt = $conn->prepare("
         SELECT 
             ci.id AS cart_item_id,
@@ -69,13 +69,13 @@ try {
         exit;
     }
 
-    // 💰 حساب subtotal
+    // Calculate the subtotal
     $subtotal = 0;
     foreach ($items as $item) {
         $subtotal += $item['total_price'];
     }
 
-    // 🎟️ حساب الخصم (لو فيه كوبون)
+    // Calculate the discount (if there is a coupon)
     $discount = 0;
     if (!empty($cart['coupon_id'])) {
         $couponStmt = $conn->prepare("SELECT * FROM coupons WHERE id = :id AND is_active = 1 AND expires_at >= CURDATE()");
@@ -92,7 +92,7 @@ try {
         }
     }
 
-    // 🚚 حساب الشحن (لو محدد)
+    // Calculate shipping (if selected)
     $shipping = 0;
     if (!empty($cart['shipping_id'])) {
         $shipStmt = $conn->prepare("SELECT cost FROM shipping_methods WHERE id = :id AND is_active = 1");
@@ -102,7 +102,7 @@ try {
         $shipping = $shippingData ? $shippingData['cost'] : 0;
     }
 
-    // ✅ حساب الإجمالي النهائي
+    // Calculate the final total
     $total = $subtotal - $discount + $shipping;
 
     echo json_encode([
