@@ -5,14 +5,14 @@ require_once __DIR__ . "/../auth/validate_token.php";
 
 $config = require __DIR__ . "/../payment/config.php";
 
-// ✅ تحقق من تسجيل الدخول
+// Make sure the user is logged in
 if (empty($userData)) {
     http_response_code(401);
     echo json_encode(["status" => false, "error" => "Unauthorized"]);
     exit;
 }
 
-// بيانات من المستخدم (إجمالي الفاتورة)
+// Data from the user (invoice total)
 $data = json_decode(file_get_contents("php://input"), true);
 $total = $data['total'] ?? 0;
 
@@ -22,13 +22,13 @@ if ($total <= 0) {
     exit;
 }
 
-// إعداد الرابط المناسب
+// Set the correct URL
 $baseUrl = $config['sandbox']
     ? "https://api.sandbox.paypal.com"
     : "https://api.paypal.com";
 
 try {
-    // 1️⃣ احصل على Access Token من PayPal
+    // 1. Get an access token from PayPal
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "$baseUrl/v1/oauth2/token");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -43,7 +43,7 @@ try {
 
     if (!$accessToken) throw new Exception("Invalid access token");
 
-    // 2️⃣ إنشاء طلب دفع
+    // 2. Create the payment order
     $orderData = [
         "intent" => "CAPTURE",
         "purchase_units" => [
@@ -81,7 +81,7 @@ try {
         "status" => true,
         "message" => "PayPal order created successfully",
         "order_id" => $result['id'],
-        "approval_link" => $result['links'][1]['href'] ?? null // رابط الدفع
+        "approval_link" => $result['links'][1]['href'] ?? null // Payment link
     ]);
 
 } catch (Exception $e) {

@@ -4,7 +4,7 @@ require_once "../conn/db.php";
 require_once "../auth/validate_token.php";
 require_once "../vendor/autoload.php";
 
-// ✅ تأكيد أن المستخدم أدمن
+// Make sure the user is an admin
 if (empty($userData) || ($userData['role'] ?? 'user') !== 'admin') {
     http_response_code(403);
     echo json_encode(["status" => false, "error" => "Access denied"]);
@@ -13,7 +13,7 @@ if (empty($userData) || ($userData['role'] ?? 'user') !== 'admin') {
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-// ✅ التحقق من المدخلات
+// Validate the input
 if (
     empty($data['code']) ||
     empty($data['discount_type']) ||
@@ -31,21 +31,21 @@ $discount_value = floatval($data['discount_value']);
 $expires_at = $data['expires_at'];
 $is_active = $data['is_active'] ?? 1;
 
-// ✅ السماح فقط بالقيم المحددة
+// Allow only the defined values
 if(!in_array($discount_type, ['percent','fixed'])){
     http_response_code(400);
     echo json_encode(["status" => false, "error" => "Invalid discount type"]);
     exit;
 }
 
-// ✅ التحقق من قيمة الخصم
+// Validate the discount value
 if(!is_numeric($discount_value) || $discount_value <= 0){
     http_response_code(400);
     echo json_encode(["status" => false, "error" => "Discount value must be a positive number"]);
     exit;
 }
 
-// ✅ تنفيذ الإدخال
+// Run the insert
 try {
     $stmt = $conn->prepare("
         INSERT INTO coupons (code, discount_type, discount_value, is_active, expires_at)

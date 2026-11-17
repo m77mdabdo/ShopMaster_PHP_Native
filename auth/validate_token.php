@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: application/json");
 
-// تحميل مكتبة JWT
+// Load the JWT library
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use Firebase\JWT\JWT;
